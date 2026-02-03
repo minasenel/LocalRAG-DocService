@@ -35,6 +35,5 @@ class DocumentProcessor:
         except Exception as e:
             raise Exception(f"Döküman okunurken teknik bir hata oluştu: {str(e)}")
 
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         return text_splitter.split_documents(documents)
