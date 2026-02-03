@@ -12,36 +12,29 @@ class DocumentProcessor:
         self.file_path = file_path
 
     def process(self):
-        """
-        Dosya uzantısına göre uygun yükleyiciyi seçer ve metni parçalara böler.
-        """
-        # Dosyanın varlığını kontrol et
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"Döküman bulunamadı: {self.file_path}")
 
-        # Uzantıyı al ve küçük harfe çevir
         ext = os.path.splitext(self.file_path)[-1].lower()
         
-        # Factory Logic: Uzantıya göre loader seçimi
+        # (unit test de test_unsupported_file_extension() için fix)
+        # Hata yakalamayı  önce yapalım. sadece desteklediğimiz türden dosyaları alacağız, else , throw "ValueError"
+        if ext == ".pdf":
+            loader = PyPDFLoader(self.file_path)
+        elif ext == ".txt":
+            loader = TextLoader(self.file_path, encoding='utf-8')
+        elif ext == ".md":
+            loader = UnstructuredMarkdownLoader(self.file_path)
+        else:
+            # burası doğrudan fırlatılmalı
+            raise ValueError(f"Desteklenmeyen dosya formatı: {ext}. Lütfen PDF, TXT veya MD kullanın.")
+        
+        # sadece dosya okuma işlemini try-except içine alalım
         try:
-            if ext == ".pdf":
-                loader = PyPDFLoader(self.file_path)
-            elif ext == ".txt":
-                loader = TextLoader(self.file_path, encoding='utf-8')
-            elif ext == ".md":
-                loader = UnstructuredMarkdownLoader(self.file_path)
-            else:
-                # Beklenmeyen bir giriş geldiğinde hata yakalama
-                raise ValueError(f"Desteklenmeyen dosya formatı: {ext}. Lütfen PDF, TXT veya MD kullanın.")
-            
             documents = loader.load()
         except Exception as e:
-            raise Exception(f"Döküman yüklenirken hata oluştu: {str(e)}")
+            raise Exception(f"Döküman okunurken teknik bir hata oluştu: {str(e)}")
 
-        # Metni Parçalara Bölme
-        # 1000 karakterlik parçalar ve 100 karakterlik örtüşme ile bağlam korunur.
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, 
-            chunk_overlap=100
-        )
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         return text_splitter.split_documents(documents)
