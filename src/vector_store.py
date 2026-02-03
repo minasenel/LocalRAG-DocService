@@ -23,7 +23,7 @@ class DocumentProcessor:
 
         documents = loader.load()
         
-        # 2. Metni parçalara böl (Vaka çalışması PEP8 standardı gereği docstring eklendi) [cite: 35]
+        # 2. Metni parçalara böl [cite: 35]
         from langchain_text_splitters import RecursiveCharacterTextSplitter
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000, 

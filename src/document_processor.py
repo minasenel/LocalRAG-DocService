@@ -22,7 +22,7 @@ class DocumentProcessor:
         # Uzantıyı al ve küçük harfe çevir
         ext = os.path.splitext(self.file_path)[-1].lower()
         
-        # 1. Fabrika Mantığı (Factory Logic): Uzantıya göre Loader seçimi
+        # Factory Logic: Uzantıya göre loader seçimi
         try:
             if ext == ".pdf":
                 loader = PyPDFLoader(self.file_path)
@@ -38,7 +38,7 @@ class DocumentProcessor:
         except Exception as e:
             raise Exception(f"Döküman yüklenirken hata oluştu: {str(e)}")
 
-        # 2. Metni Parçalara Bölme
+        # Metni Parçalara Bölme
         # 1000 karakterlik parçalar ve 100 karakterlik örtüşme ile bağlam korunur.
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000, 
