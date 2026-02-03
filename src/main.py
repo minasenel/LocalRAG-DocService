@@ -36,7 +36,7 @@ async def ask_question(question: str):
     context = ""
     if vector_manager:
         relevant_docs = vector_manager.search(question, k=3)
-        # Bulunan parçaları birleştirelim
+        
         context = "\n".join([doc.page_content for doc in relevant_docs])
         
         
@@ -59,5 +59,4 @@ Sadece dökümandaki bilgilere sadık kal.
     return {
         "question": question, 
         "answer": answer,
-        "debug_context": context # Bu satır sayesinde modelin neyi okuduğunu göreceksin
     }
