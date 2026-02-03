@@ -1,0 +1,15 @@
+PROJE NOTLARI - ŞENEL YAZILIM (ŞUBAT 2026)
+
+1. Ofis Kuralları:
+- Her Cuma günü saat 15:30'da "Teknoloji Kahvesi" etkinliği düzenlenir. 
+-"Teknoloji Kahvesi" etkinliğinde herkes beyaz giyinmelidir. 
+- Ofise evcil hayvan getirmek serbesttir ancak her gün en fazla 2 evcil hayvan kabul edilir.
+
+2. Teknik Detaylar:
+- Projenin kod adı: "Elmas-RAG". [cite: 4]
+- Veri saklama süresi: Tüm kullanıcı logları 90 gün boyunca şifreli olarak saklanır.
+- Kullanılan yerel model: Llama 3.2 (3B sürümü). [cite: 18]
+
+3. İletişim:
+- Teknik bir sorun yaşandığında destek@ayazyazilim.com adresine mail atılmalıdır.
+- Acil durumlarda "Sinyal-9" koduyla dahili hattan bildirim yapılır.

@@ -1,0 +1,12 @@
+# Python virtual env
+venv/
+__pycache__/
+*.pyc
+
+# Vektör db (yerel olduğu için her kurulumda tekrar oluşmalı)
+chroma_db/
+
+# Veri dosyaları 
+# data/
+
+.DS_Store
