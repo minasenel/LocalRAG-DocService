@@ -1,32 +1,30 @@
-import os
-from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredMarkdownLoader
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import OllamaEmbeddings
 
-class DocumentProcessor:
-    """PDF, TXT ve Markdown dökümanlarını otomatik tanıyan ve işleyen sınıf."""
+class VectorStoreManager:
+    """Vektör veritabanı işlemlerini (kayıt ve arama) yöneten sınıf."""
     
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-
-    def process(self):
-        """Dosya uzantısına göre uygun yükleyiciyi seçer ve parçalara böler."""
-        ext = os.path.splitext(self.file_path)[-1].lower()
+    def __init__(self, chunks=None):
+        # Ollama üzerinden Llama 3.2 modelini embedding için kullanıyoruz
+        self.embeddings = OllamaEmbeddings(model="llama3.2")
+        self.persist_directory = "./chroma_db"
         
-        # 1. Uzantıya göre Loader seçimi
-        if ext == ".pdf":
-            loader = PyPDFLoader(self.file_path)
-        elif ext == ".txt":
-            loader = TextLoader(self.file_path)
-        elif ext == ".md":
-            loader = UnstructuredMarkdownLoader(self.file_path)
+        if chunks:
+            # Eğer döküman parçaları gelmişse veritabanını oluştur ve diske kaydet
+            self.db = Chroma.from_documents(
+                documents=chunks,
+                embedding=self.embeddings,
+                persist_directory=self.persist_directory
+            )
         else:
-            raise ValueError(f"Desteklenmeyen dosya formatı: {ext}")
+            # Eğer parçalar yoksa mevcut veritabanını diskten yükle
+            self.db = Chroma(
+                persist_directory=self.persist_directory,
+                embedding_function=self.embeddings
+            )
 
-        documents = loader.load()
-        
-        # 2. Metni parçalara böl [cite: 35]
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, 
-            chunk_overlap=100
-        )
-        return text_splitter.split_documents(documents)
+    def search(self, query: str, k: int = 3):
+        """Soruyla en alakalı k adet döküman parçasını getirir."""
+        if not self.db:
+            return []
+        return self.db.similarity_search(query, k=k)
