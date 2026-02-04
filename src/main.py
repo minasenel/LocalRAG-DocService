@@ -60,3 +60,43 @@ Sadece dökümandaki bilgilere sadık kal.
         "question": question, 
         "answer": answer,
     }
+#veri tabanı işlemleri için endpointlarımız:
+# A. get_db_stats: veritabanındaki toplam doküman sayısını döndürür
+@app.get("/db/stats") 
+async def get_db_stats():
+    """Veritabanı istatistiklerini döndürür."""
+    if not vector_manager:
+        raise HTTPException(status_code=503, detail="Veritabanı başlatılmamış")
+    
+    count = vector_manager.get_document_count()
+    return {
+        "total_documents": count,
+        "status": "active" if count > 0 else "empty"
+    }
+
+# B. get_documents: veritabanındaki dokümanları listeler
+@app.get("/db/documents")
+async def get_documents(limit: int = 10):
+    """Veritabanındaki dokümanları listeler."""
+    if not vector_manager:
+        raise HTTPException(status_code=503, detail="Veritabanı başlatılmamış")
+    
+    documents = vector_manager.get_documents_with_metadata(limit=limit)
+    return {
+        "count": len(documents),
+        "documents": documents
+    }
+
+# C. preview_documents: veritabanındaki dokümanların önizlemesini gösterir
+@app.get("/db/preview")
+async def preview_documents(limit: int = 5):
+    """Veritabanındaki dokümanların önizlemesini gösterir."""
+    if not vector_manager:
+        raise HTTPException(status_code=503, detail="Veritabanı başlatılmamış")
+    
+    documents = vector_manager.get_documents_with_metadata(limit=limit)
+    return {
+        "preview_count": len(documents),
+        "total_documents": vector_manager.get_document_count(),
+        "documents": documents
+    }
