@@ -28,6 +28,17 @@ class VectorStoreManager:
         if not self.db:
             return []
         return self.db.similarity_search(query, k=k)
+    
+    def add_documents(self, chunks):
+        """Mevcut veritabanına yeni dokümanlar ekler (mevcut veriler korunur)."""
+        if not self.db or not chunks:
+            return False
+        try:
+            self.db.add_documents(chunks)
+            return True
+        except Exception as e:
+            print(f"Hata: Yeni dokümanlar eklenirken hata oluştu: {e}")
+            return False
 
 
 #veri tabanı işlemleri için fonksiyonlar:

@@ -4,26 +4,67 @@ from src.llm_client import LLMClient
 from src.document_processor import DocumentProcessor
 from src.vector_store import VectorStoreManager
 import os
+import glob
+
+def load_all_documents(data_dir: str):
+    """data/ klasöründeki tüm desteklenen dosyaları (PDF, TXT, MD) yükler."""
+    all_chunks = []
+    supported_extensions = ['.pdf', '.txt', '.md']
+    
+    # Tüm desteklenen dosyaları bul
+    files_found = []
+    for ext in supported_extensions:
+        pattern = os.path.join(data_dir, f"*{ext}")
+        files_found.extend(glob.glob(pattern))
+    
+    if not files_found:
+        print(f"--- UYARI: {data_dir} klasöründe desteklenen dosya bulunamadı ---")
+        return []
+    
+    print(f"--- {len(files_found)} dosya bulundu, işleniyor... ---")
+    
+    for file_path in files_found:
+        try:
+            print(f"--- Döküman işleniyor: {os.path.basename(file_path)} ---")
+            processor = DocumentProcessor(file_path)
+            chunks = processor.process()
+            all_chunks.extend(chunks)
+            print(f"--- ✓ {os.path.basename(file_path)} işlendi ({len(chunks)} chunk) ---")
+        except Exception as e:
+            print(f"--- ✗ Hata ({os.path.basename(file_path)}): {e} ---")
+            continue
+    
+    return all_chunks
+
+def initialize_database():
+    """Veritabanını başlatır veya yeniden yükler."""
+    global vector_manager
+    current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(current_dir, "data")
+    
+    if not os.path.exists(data_dir):
+        print(f"--- HATA: {data_dir} klasörü bulunamadı! ---")
+        vector_manager = VectorStoreManager(chunks=None)
+        return
+    
+    chunks = load_all_documents(data_dir)
+    
+    if chunks:
+        vector_manager = VectorStoreManager(chunks)
+        print(f"--- RAG Sistemi Hazır ({len(chunks)} toplam chunk) ---")
+    else:
+        # Eğer dosya yoksa ama veritabanı varsa, mevcut veritabanını yükle
+        vector_manager = VectorStoreManager(chunks=None)
+        count = vector_manager.get_document_count()
+        if count > 0:
+            print(f"--- Mevcut veritabanı yüklendi ({count} doküman) ---")
+        else:
+            print("--- Veritabanı boş ---")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global vector_manager
-    # data_path kısmını garantiye almak için os.path.join kullanalım
-    current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    data_path = os.path.join(current_dir, "data", "notes.txt")
-    
-    if os.path.exists(data_path):
-        print(f"--- Döküman işleniyor: {data_path} ---")
-        try:
-            processor = DocumentProcessor(data_path)
-            chunks = processor.process()
-            vector_manager = VectorStoreManager(chunks)
-            print("--- RAG Sistemi Hazır ---")
-        except Exception as e:
-            print(f"--- Hata: {e} ---")
-    else:
-        print(f"--- HATA: {data_path} dosyası bulunamadı! ---")
-    
+    initialize_database()
     yield
     print("--- Servis kapatılıyor ---")
 
@@ -99,4 +140,69 @@ async def preview_documents(limit: int = 5):
         "preview_count": len(documents),
         "total_documents": vector_manager.get_document_count(),
         "documents": documents
+    }
+
+# D. reload_database: veritabanını temizleyip data/ klasöründeki tüm dosyaları yeniden yükler
+@app.post("/db/reload")
+async def reload_database():
+    """Veritabanını temizleyip data/ klasöründeki tüm dosyaları yeniden yükler."""
+    global vector_manager
+    
+    try:
+        # Mevcut veritabanını temizle
+        import shutil
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        chroma_db_path = os.path.join(current_dir, "chroma_db")
+        
+        if os.path.exists(chroma_db_path):
+            shutil.rmtree(chroma_db_path)
+            print("--- Mevcut veritabanı temizlendi ---")
+        
+        # Veritabanını yeniden başlat
+        initialize_database()
+        
+        count = vector_manager.get_document_count() if vector_manager else 0
+        return {
+            "status": "success",
+            "message": "Veritabanı başarıyla yeniden yüklendi",
+            "total_documents": count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Veritabanı yeniden yüklenirken hata: {str(e)}")
+
+# E. list_files: data/ klasöründeki tüm dosyaları listeler
+@app.get("/db/files")
+async def list_files():
+    """data/ klasöründeki desteklenen dosyaları listeler."""
+    current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(current_dir, "data")
+    
+    if not os.path.exists(data_dir):
+        return {
+            "files": [],
+            "count": 0,
+            "message": "data/ klasörü bulunamadı"
+        }
+    
+    supported_extensions = ['.pdf', '.txt', '.md']
+    files_found = []
+    for ext in supported_extensions:
+        pattern = os.path.join(data_dir, f"*{ext}")
+        files_found.extend(glob.glob(pattern))
+    
+    files_info = []
+    for file_path in files_found:
+        file_name = os.path.basename(file_path)
+        file_size = os.path.getsize(file_path)
+        files_info.append({
+            "name": file_name,
+            "path": file_path,
+            "size": file_size,
+            "extension": os.path.splitext(file_name)[-1].lower()
+        })
+    
+    return {
+        "files": files_info,
+        "count": len(files_info),
+        "data_directory": data_dir
     }
