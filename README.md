@@ -79,15 +79,97 @@ pytest
 
 komutu kullanılabilir. Testler, tests/ dizini altındaki senaryolar üzerinden sistemin hata yakalama kabiliyetini doğrular.
 
+## API Endpoint'leri
+
+Sistem, FastAPI üzerinden aşağıdaki REST API endpoint'lerini sunar:
+
+### 1. Soru-Cevap Endpoint'i
+
+**`POST /ask`**
+- RAG mimarisi ile dokümanlardan soru-cevap yapma
+- Parametre: `question` (string)
+- Dönen: Soru ve cevap
+
+**Örnek:**
+```bash
+curl -X POST "http://127.0.0.1:8000/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Teknoloji Kahvesi ne zaman yapılıyor?"}'
+```
+
+### 2. Veritabanı Yönetimi Endpoint'leri
+
+**`GET /db/stats`**
+- Veritabanı istatistiklerini döndürür
+- Toplam doküman sayısı ve durum bilgisi
+
+**`GET /db/documents?limit=10`**
+- Veritabanındaki dokümanları listeler
+- Metadata bilgileriyle birlikte
+- `limit` parametresi ile sınırlama (varsayılan: 10)
+
+**`GET /db/preview?limit=5`**
+- Dokümanların kısa önizlemesini gösterir
+- Toplam doküman sayısı ile birlikte
+- `limit` parametresi ile sınırlama (varsayılan: 5)
+
+**`GET /db/files`**
+- `data/` klasöründeki desteklenen dosyaları listeler
+- Dosya adı, yolu, boyutu ve uzantısı bilgileri
+
+**`POST /db/reload`**
+- Veritabanını temizleyip `data/` klasöründeki tüm dosyaları yeniden yükler
+- Dosya değişikliklerinden sonra kullanılır
+- Mevcut veritabanını siler ve sıfırdan oluşturur
+
+**Örnek:**
+```bash
+curl -X POST "http://127.0.0.1:8000/db/reload"
+```
+
+## Çoklu Dosya Desteği
+
+Sistem, `data/` klasöründeki **tüm** desteklenen dosyaları (PDF, TXT, MD) otomatik olarak yükler:
+
+- ✅ Her dosya ayrı metadata ile saklanır (dosya adı, yolu)
+- ✅ Her dosya farklı ID'ler altında indekslenir
+- ✅ Uygulama başlangıcında tüm dosyalar otomatik işlenir
+- ✅ Yeni dosya eklemek için `POST /db/reload` endpoint'ini kullanın
+
+### Dosya Yönetimi
+
+1. **Yeni dosya ekleme:**
+   - `data/` klasörüne yeni PDF/TXT/MD dosyası ekleyin
+   - `POST /db/reload` endpoint'ini çağırın
+
+2. **Dosya değişikliği:**
+   - Dosyayı düzenleyin
+   - `POST /db/reload` endpoint'ini çağırın
+
+3. **Dosyaları görüntüleme:**
+   - `GET /db/files` ile `data/` klasöründeki dosyaları listeleyin
+
 ## Özellikler
 
 ✅ Tamamen yerel çalışma (veri gizliliği)  
 ✅ PDF, TXT, MD formatı desteği  
+✅ **Çoklu dosya desteği** - `data/` klasöründeki tüm dosyalar otomatik yüklenir  
 ✅ RAG mimarisi ile bağlama dayalı yanıtlar  
 ✅ ChromaDB ile hızlı vektör araması  
 ✅ Ollama entegrasyonu  
 ✅ FastAPI tabanlı REST API  
+✅ **6 farklı endpoint** ile veritabanı yönetimi  
+✅ **Manuel veritabanı yeniden yükleme** desteği  
 ✅ Kapsamlı hata yönetimi ve test altyapısı  
+✅ **13 unit test** ile kapsamlı test kapsamı  
+
+## Swagger UI
+
+Tüm endpoint'leri test etmek için Swagger UI kullanılabilir:
+
+```
+http://127.0.0.1:8000/docs
+```
 
 ---
 
