@@ -1,5 +1,5 @@
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 class VectorStoreManager:
     """Vektör veritabanı işlemlerini (kayıt ve arama) yöneten sınıf."""
