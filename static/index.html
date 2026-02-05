@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG API Arayüzü</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: #F7F5F0;
+            color: #1A1A1A;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .header {
+            margin-bottom: 80px;
+            border-bottom: 1px solid #1A1A1A;
+            padding-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            color: #1A1A1A;
+        }
+
+        .header p {
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #1A1A1A;
+            opacity: 0.7;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 60px;
+            border-bottom: 1px solid #1A1A1A;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 16px 32px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid transparent;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1A1A1A;
+            transition: all 0.2s;
+            position: relative;
+            margin-bottom: -1px;
+        }
+
+        .tab-button:hover {
+            background: #1A1A1A;
+            color: #F7F5F0;
+        }
+
+        .tab-button.active {
+            border-bottom: 1px solid #1A1A1A;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content h2 {
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            color: #1A1A1A;
+        }
+
+        .form-group {
+            margin-bottom: 40px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1A1A1A;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #1A1A1A;
+            background: #F7F5F0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: #1A1A1A;
+            transition: all 0.2s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            background: #1A1A1A;
+            color: #F7F5F0;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        button {
+            background: #1A1A1A;
+            color: #F7F5F0;
+            border: 1px solid #1A1A1A;
+            padding: 16px 32px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #F7F5F0;
+            color: #1A1A1A;
+        }
+
+        button:disabled {
+            background: #F7F5F0;
+            color: #1A1A1A;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: #1A1A1A;
+            color: #F7F5F0;
+        }
+
+        button.danger:hover {
+            background: #F7F5F0;
+            color: #1A1A1A;
+        }
+
+        .response {
+            margin-top: 40px;
+            padding: 32px;
+            background: #F7F5F0;
+            border: 1px solid #1A1A1A;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .response pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #1A1A1A;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #1A1A1A;
+            border-top: 1px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            border: 1px solid #1A1A1A;
+            padding: 32px;
+            text-align: left;
+            background: #F7F5F0;
+        }
+
+        .stat-card h3 {
+            font-size: 32px;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: #1A1A1A;
+        }
+
+        .stat-card p {
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1A1A1A;
+            opacity: 0.7;
+        }
+
+        .document-item {
+            border: 1px solid #1A1A1A;
+            padding: 24px;
+            margin-bottom: 20px;
+            background: #F7F5F0;
+        }
+
+        .document-item h4 {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            color: #1A1A1A;
+        }
+
+        .document-item p {
+            font-size: 12px;
+            line-height: 1.8;
+            color: #1A1A1A;
+            margin-bottom: 12px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border: 1px solid #1A1A1A;
+            margin-bottom: 20px;
+            background: #F7F5F0;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1A1A1A;
+            margin-bottom: 8px;
+        }
+
+        .file-details {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #1A1A1A;
+            opacity: 0.7;
+        }
+
+        .info-text {
+            font-size: 12px;
+            line-height: 1.8;
+            color: #1A1A1A;
+            opacity: 0.7;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            .header {
+                margin-bottom: 40px;
+                padding-bottom: 24px;
+            }
+
+            .tabs {
+                margin-bottom: 40px;
+            }
+
+            .tab-button {
+                padding: 12px 16px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RAG API Arayüzü</h1>
+            <p>Doküman Soru-Cevap Servisi</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('ask')">Soru Sor</button>
+            <button class="tab-button" onclick="showTab('stats')">İstatistikler</button>
+            <button class="tab-button" onclick="showTab('documents')">Dokümanlar</button>
+            <button class="tab-button" onclick="showTab('preview')">Önizleme</button>
+            <button class="tab-button" onclick="showTab('files')">Dosyalar</button>
+            <button class="tab-button" onclick="showTab('reload')">Yeniden Yükle</button>
+        </div>
+
+        <!-- Ask Question Tab -->
+        <div id="ask" class="tab-content active">
+            <h2>Soru Sor</h2>
+            <div class="form-group">
+                <label for="question">Soru</label>
+                <textarea id="question" placeholder="Sorunuzu buraya girin..."></textarea>
+            </div>
+            <button onclick="askQuestion()">Gönder</button>
+            <div id="ask-response" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="stats" class="tab-content">
+            <h2>Veritabanı İstatistikleri</h2>
+            <button onclick="getStats()">İstatistikleri Getir</button>
+            <div id="stats-response" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Documents Tab -->
+        <div id="documents" class="tab-content">
+            <h2>Dokümanlar</h2>
+            <div class="form-group">
+                <label for="doc-limit">Limit</label>
+                <input type="number" id="doc-limit" value="10" min="1" max="100">
+            </div>
+            <button onclick="getDocuments()">Dokümanları Getir</button>
+            <div id="documents-response" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Preview Tab -->
+        <div id="preview" class="tab-content">
+            <h2>Doküman Önizlemesi</h2>
+            <div class="form-group">
+                <label for="preview-limit">Limit</label>
+                <input type="number" id="preview-limit" value="5" min="1" max="50">
+            </div>
+            <button onclick="getPreview()">Önizlemeyi Getir</button>
+            <div id="preview-response" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Files Tab -->
+        <div id="files" class="tab-content">
+            <h2>Dosyalar</h2>
+            <button onclick="getFiles()">Dosyaları Listele</button>
+            <div id="files-response" class="response" style="display: none;"></div>
+        </div>
+
+        <!-- Reload Tab -->
+        <div id="reload" class="tab-content">
+            <h2>Veritabanını Yeniden Yükle</h2>
+            <p class="info-text">
+                Bu işlem mevcut veritabanını temizleyip data/ klasöründeki tüm dosyaları yeniden yükler.
+            </p>
+            <button class="danger" onclick="reloadDatabase()">Veritabanını Yeniden Yükle</button>
+            <div id="reload-response" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('question').value;
+            if (!question.trim()) {
+                alert('Lütfen bir soru girin');
+                return;
+            }
+
+            const responseDiv = document.getElementById('ask-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                const data = await response.json();
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+
+        async function getStats() {
+            const responseDiv = document.getElementById('stats-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/db/stats`);
+                const data = await response.json();
+                
+                let html = '<div class="stats-grid">';
+                html += `<div class="stat-card"><h3>${data.total_documents}</h3><p>Toplam Doküman</p></div>`;
+                html += `<div class="stat-card"><h3>${data.status}</h3><p>Durum</p></div>`;
+                html += '</div>';
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                responseDiv.innerHTML = html;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+
+        async function getDocuments() {
+            const limit = document.getElementById('doc-limit').value;
+            const responseDiv = document.getElementById('documents-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/db/documents?limit=${limit}`);
+                const data = await response.json();
+                
+                let html = `<p style="margin-bottom: 24px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Toplam: ${data.count} doküman</p>`;
+                data.documents.forEach((doc, index) => {
+                    html += `<div class="document-item">`;
+                    html += `<h4>Doküman #${doc.id}</h4>`;
+                    html += `<p><strong>İçerik:</strong> ${doc.content.substring(0, 200)}...</p>`;
+                    html += `<p><strong>Metadata:</strong> ${JSON.stringify(doc.metadata)}</p>`;
+                    html += `</div>`;
+                });
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                responseDiv.innerHTML = html;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+
+        async function getPreview() {
+            const limit = document.getElementById('preview-limit').value;
+            const responseDiv = document.getElementById('preview-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/db/preview?limit=${limit}`);
+                const data = await response.json();
+                
+                let html = `<p style="margin-bottom: 12px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Önizleme: ${data.preview_count} doküman</p>`;
+                html += `<p style="margin-bottom: 24px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Toplam: ${data.total_documents} doküman</p>`;
+                data.documents.forEach((doc, index) => {
+                    html += `<div class="document-item">`;
+                    html += `<h4>Doküman #${doc.id}</h4>`;
+                    html += `<p>${doc.content}</p>`;
+                    html += `</div>`;
+                });
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                responseDiv.innerHTML = html;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+
+        async function getFiles() {
+            const responseDiv = document.getElementById('files-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/db/files`);
+                const data = await response.json();
+                
+                let html = `<p style="margin-bottom: 12px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Toplam: ${data.count} dosya</p>`;
+                html += `<p style="margin-bottom: 24px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Klasör: ${data.data_directory}</p>`;
+                data.files.forEach(file => {
+                    const sizeKB = (file.size / 1024).toFixed(2);
+                    html += `<div class="file-item">`;
+                    html += `<div class="file-info">`;
+                    html += `<div class="file-name">${file.name}</div>`;
+                    html += `<div class="file-details">${file.extension.toUpperCase()} • ${sizeKB} KB</div>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                responseDiv.innerHTML = html;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+
+        async function reloadDatabase() {
+            if (!confirm('Veritabanını yeniden yüklemek istediğinizden emin misiniz? Mevcut veriler silinecek!')) {
+                return;
+            }
+
+            const responseDiv = document.getElementById('reload-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<div class="loading"></div>Veritabanı yeniden yükleniyor...';
+
+            try {
+                const response = await fetch(`${API_BASE}/db/reload`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                let html = `<p style="margin-bottom: 16px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">${data.message}</p>`;
+                html += `<p style="margin-bottom: 24px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Toplam Doküman: ${data.total_documents}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                responseDiv.innerHTML = html;
+            } catch (error) {
+                responseDiv.innerHTML = `<pre style="color: #1A1A1A;">Hata: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

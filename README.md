@@ -2,6 +2,28 @@
 
 Bu proje; veri gizliliğini merkeze alarak, tamamen yerel donanım üzerinde çalışan bir Doküman Soru-Cevap (Document Q&A) servisidir. Sistem, RAG (Retrieval-Augmented Generation) mimarisini kullanarak kullanıcının yüklediği dökümanlar (PDF, TXT, MD) üzerinden anlamlı ve bağlama dayalı yanıtlar üretir.
 
+## Teknoloji Seçimleri
+
+### Ollama ve Llama 3.2 Modeli
+
+Bu projede **Ollama** altyapısı ve **Llama 3.2 (3B)** modeli tercih edilmiştir. Bu seçimin temel nedenleri:
+
+**Performans ve Kaynak Dengesi**
+- **Hız**: 3 milyar parametreli model, orta seviye donanımlarda dahi akıcı yanıt süreleri sunar
+- **Bellek Verimliliği**: ~2GB model boyutu ile 8GB+ RAM'e sahip sistemlerde API ve vektör veritabanı birlikte sorunsuz çalışır
+
+**Modern Mimari**
+- **Güncel Teknoloji**: Meta'nın yayınladığı en yeni küçük modellerden biri olan Llama 3.2, eski nesil modellere göre üstün anlama kapasitesine sahiptir
+- **RAG Optimizasyonu**: Bağlam (context) anlama ve dökümana sadık kalma konusunda yüksek performans gösterir
+
+**Yerel Çalışma Gereksinimleri**
+- **Tam Çevrimdışı**: Bulut servislerine bağımlılık olmadan tamamen yerel çalışır
+- **Açık Kaynak**: Ücretsiz ve açık kaynaklı lisanslama
+
+**Geliştirme Kolaylığı**
+- **Standart API**: REST API uç noktaları (localhost:11434) üzerinden kolay entegrasyon
+- **Geniş Topluluk Desteği**: Ollama ekosistemi ve dokümantasyonu
+
 ## Proje Amacı ve Çalışma Mantığı
 
 Proje, verilerin bulut tabanlı bir LLM'e (Large Language Model) gönderilmesi yerine, yerel bir yapay zeka motoru (Ollama) ve vektör veritabanı (ChromaDB) kullanılarak işlenmesini sağlar.
@@ -66,7 +88,10 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload
 ```
 
-Uygulama başladığında terminalde "RAG Sistemi Hazır" mesajı görüldükten sonra http://127.0.0.1:8000/docs üzerinden test edilebilir.
+Uygulama başladığında terminalde "RAG Sistemi Hazır" mesajı görüldükten sonra:
+
+- **Web Arayüzü**: http://127.0.0.1:8000 (Tüm API'leri test edebileceğiniz kullanıcı dostu arayüz)
+- **Swagger UI**: http://127.0.0.1:8000/docs (API dokümantasyonu)
 
 ## Hata Yönetimi ve Testler
 
@@ -163,9 +188,23 @@ Sistem, `data/` klasöründeki **tüm** desteklenen dosyaları (PDF, TXT, MD) ot
 ✅ Kapsamlı hata yönetimi ve test altyapısı  
 ✅ **13 unit test** ile kapsamlı test kapsamı  
 
+## Web Arayüzü
+
+Sistem, tüm API endpoint'lerini test edebileceğiniz modern bir web arayüzü sunar:
+
+**Web Arayüzü**: http://127.0.0.1:8000
+
+Arayüz özellikleri:
+- ✅ Soru-cevap endpoint'i
+- ✅ Veritabanı istatistikleri görüntüleme
+- ✅ Doküman listesi ve önizleme
+- ✅ Dosya yönetimi
+- ✅ Veritabanı yeniden yükleme
+- ✅ Modern ve kullanıcı dostu tasarım
+
 ## Swagger UI
 
-Tüm endpoint'leri test etmek için Swagger UI kullanılabilir:
+API dokümantasyonu ve gelişmiş test için: 
 
 ```
 http://127.0.0.1:8000/docs
