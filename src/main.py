@@ -1,10 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from src.llm_client import LLMClient
 from src.document_processor import DocumentProcessor
 from src.vector_store import VectorStoreManager
 import os
 import glob
+
+class QuestionRequest(BaseModel):
+    question: str
 
 def load_all_documents(data_dir: str):
     """data/ klasöründeki tüm desteklenen dosyaları (PDF, TXT, MD) yükler."""
@@ -72,8 +78,23 @@ app = FastAPI(title="Doküman Soru-Cevap Servisi", lifespan=lifespan)
 llm = LLMClient()
 vector_manager = None
 
+# Static dosyalar için mount
+current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+static_dir = os.path.join(current_dir, "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.get("/")
+async def read_root():
+    """Ana sayfa - web arayüzünü döndürür."""
+    static_file = os.path.join(static_dir, "index.html")
+    if os.path.exists(static_file):
+        return FileResponse(static_file)
+    return {"message": "Web arayüzü bulunamadı. Lütfen /docs adresini kullanın."}
+
 @app.post("/ask")
-async def ask_question(question: str):
+async def ask_question(request: QuestionRequest):
+    question = request.question
     context = ""
     if vector_manager:
         relevant_docs = vector_manager.search(question, k=3)
