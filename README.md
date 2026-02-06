@@ -2,6 +2,13 @@
 
 Bu proje; veri gizliliğini merkeze alarak, tamamen yerel donanım üzerinde çalışan bir Doküman Soru-Cevap (Document Q&A) servisidir. Sistem, RAG (Retrieval-Augmented Generation) mimarisini kullanarak kullanıcının yüklediği dökümanlar (PDF, TXT, MD) üzerinden anlamlı ve bağlama dayalı yanıtlar üretir.
 
+<p align="center">
+  <img src="images/workflow.png" alt="Doküman Soru-Cevap Servisi" width="800"/>
+</p>
+<p align="center">
+  <em>Uygulama İşleyişi</em>
+</p>
+
 ## Teknoloji Seçimleri
 
 ### Ollama ve Llama 3.2 Modeli
